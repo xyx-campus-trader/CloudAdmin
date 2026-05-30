@@ -1,0 +1,56 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: mate-admin-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+      config:
+        enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: mate-admin-uaa
+          uri: lb://mate-admin-uaa
+          predicates:
+            - Path=/auth/**
+        - id: mate-admin-system
+          uri: lb://mate-admin-system
+          predicates:
+            - Path=/system/**
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8080
+        port: 8719
+
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+# JWT
+jwt:
+  secret: CloudAdmin2026SecretKeyForJwtTokenGenerationAndValidation
+  expiration: 604800
+
+# Gateway white list
+gateway:
+  white-list:
+    - /auth/login
+    - /auth/captcha
+
+logging:
+  level:
+    com.mate: debug
