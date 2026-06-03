@@ -1,23 +1,30 @@
 package com.mate.admin.system.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.mate.admin.api.dto.UserRegisterDTO;
+import com.mate.admin.api.feign.UaaFeignClient;
 import com.mate.admin.system.entity.SysUser;
 import com.mate.admin.system.mapper.SysUserMapper;
 import com.mate.admin.system.service.SysUserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         implements SysUserService {
 
     @Resource
     private SysUserMapper userMapper;
+    @Resource
+    private UaaFeignClient uaaFeignClient;
 
     @Override
     public Map<String, Object> pageQuery(int pageNum, int pageSize,
@@ -33,15 +40,29 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         return result;
     }
 
+    /**
+     * 创建用户（v0：只管自己插 MySQL，不通知任何人）
+     */
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public void addUser(SysUser user) {
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         baseMapper.insert(user);
+        UserRegisterDTO dto = new UserRegisterDTO();
+        dto.setUserId(user.getId());
+        dto.setUsername(user.getUsername());
+        try {
+            uaaFeignClient.syncUserAuth(dto);
+        }catch (Exception e){
+            log.error("UAA 认证同步失败, username={}, userId={}, error={}",
+                    user.getUsername(), user.getId(), e.getMessage(), e);
+            throw new RuntimeException("跨服务调用失败，本地事务已回滚。用户创建已撤销，请重试", e);
+        }
     }
 
     @Override
     public void updateUser(SysUser user) {
-        user.setPassword(null); // 不更新密码
+        user.setPassword(null);
         baseMapper.updateById(user);
     }
 

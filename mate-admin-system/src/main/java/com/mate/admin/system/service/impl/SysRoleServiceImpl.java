@@ -28,27 +28,27 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     private RedissonClient redissonClient;
 
     /**
-     * 角色分配权限
-     * Redisson 可重入锁防并发冲突，看门狗自动续期
-     * 锁粒度：角色ID
+     * 分配角色权限（初版：无锁，并发下会互相覆盖）
      */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
-        RLock lock = redissonClient.getLock("lock:role:" + roleId);
+        String lockKey = "lock:assign:role:" + roleId;
+        RLock lock = redissonClient.getLock(lockKey);
+
         try {
-            // tryLock(3, 10, SECONDS): 最多等3秒, 锁10秒自动释放, 看门狗在10秒内自动续期
-            if (!lock.tryLock(3, 10, TimeUnit.SECONDS)) {
-                throw new RuntimeException("操作冲突，请稍后重试");
+            if (!lock.tryLock(3, TimeUnit.SECONDS)) {
+                throw new RuntimeException("当前操作繁忙，请稍后重试");
             }
+
             roleMapper.deleteRoleMenus(roleId);
             if (menuIds != null && !menuIds.isEmpty()) {
                 roleMapper.insertRoleMenus(roleId, menuIds);
             }
-            log.info("角色权限分配成功, roleId: {}", roleId);
+
+            log.info("角色 {} 权限分配成功，菜单数: {}",
+                    roleId, menuIds == null ? 0 : menuIds.size());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("角色权限分配中断");
+            throw new RuntimeException("获取锁被中断", e);
         } finally {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
