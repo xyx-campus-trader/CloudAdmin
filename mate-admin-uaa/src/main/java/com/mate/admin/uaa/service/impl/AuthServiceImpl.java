@@ -56,4 +56,24 @@ public class AuthServiceImpl implements AuthService {
     public boolean userExists(Long userId) {
         return userMapper.selectById(userId) != null;
     }
+
+    /**
+     * UAA 为新用户初始化认证资源。
+     * 若此处失败抛异常，System 服务收到 Feign 异常后会触发本地事务回滚。
+     */
+    @Override
+    public void syncUserAuth(Long userId, String username) {
+        if (userId == null || username == null || username.isBlank()) {
+            throw new RuntimeException("用户认证同步参数非法");
+        }
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在，无法同步认证信息");
+        }
+        // 在 Redis 中预置一个占位 token，防止首次登录时缓存穿透
+        // 实际场景可以是：初始化会话槽位、写入白名单、同步到 SSO 等
+        redisTemplate.opsForValue().set("user:auth:" + userId, username,
+                30, TimeUnit.MINUTES);
+        log.info("UAA 认证资源初始化成功, userId: {}, username: {}", userId, username);
+    }
 }

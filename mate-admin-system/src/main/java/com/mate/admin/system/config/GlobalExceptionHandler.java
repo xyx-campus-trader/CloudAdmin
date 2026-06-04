@@ -1,6 +1,7 @@
 package com.mate.admin.system.config;
 
 import com.mate.admin.api.common.Result;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -8,6 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /** Feign 调用失败 —— 跨服务通信异常，本地事务已回滚 */
+    @ExceptionHandler(FeignException.class)
+    public Result<Void> handleFeign(FeignException e) {
+        log.error("Feign 调用失败, status={}, message={}", e.status(), e.getMessage(), e);
+        return Result.fail(503, "跨服务调用失败，请稍后重试");
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public Result<Void> handleRuntime(RuntimeException e) {

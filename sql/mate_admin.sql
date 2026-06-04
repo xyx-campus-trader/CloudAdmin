@@ -19,7 +19,8 @@ CREATE TABLE sys_user (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT DEFAULT 0 COMMENT '0未删 1已删',
-    UNIQUE KEY uk_username (username)
+    UNIQUE KEY uk_username (username),
+    INDEX idx_dept_status (dept_id, status, create_time)
 ) COMMENT '用户表';
 
 -- 角色表
