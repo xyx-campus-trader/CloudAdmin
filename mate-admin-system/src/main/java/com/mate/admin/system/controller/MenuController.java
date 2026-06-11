@@ -3,6 +3,7 @@ package com.mate.admin.system.controller;
 import com.mate.admin.api.common.Result;
 import com.mate.admin.system.entity.SysMenu;
 import com.mate.admin.system.service.SysMenuService;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -14,6 +15,10 @@ public class MenuController {
 
     @Resource
     private SysMenuService menuService;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    private static final String MENU_TREE_KEY = "menu:tree";
 
     /**
      * 菜单树（Cache-Aside + 互斥锁防击穿 + 空值防穿透 + 随机过期防雪崩）
@@ -36,6 +41,7 @@ public class MenuController {
     @PostMapping
     public Result<Void> add(@RequestBody SysMenu menu) {
         menuService.save(menu);
+        stringRedisTemplate.delete(MENU_TREE_KEY);
         return Result.ok();
     }
 
@@ -48,6 +54,7 @@ public class MenuController {
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         menuService.removeById(id);
+        stringRedisTemplate.delete(MENU_TREE_KEY);
         return Result.ok();
     }
 }

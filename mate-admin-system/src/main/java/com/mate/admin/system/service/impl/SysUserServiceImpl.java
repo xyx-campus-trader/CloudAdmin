@@ -41,22 +41,24 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
 
     /**
-     * 创建用户（v0：只管自己插 MySQL，不通知任何人）
+     * 创建用户：先落库（auto-commit），数据对 UAA 可见后再同步认证信息；
+     * Feign 失败则补偿删除用户。
      */
     @Override
-    @Transactional(rollbackFor =  Exception.class)
     public void addUser(SysUser user) {
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         baseMapper.insert(user);
+
         UserRegisterDTO dto = new UserRegisterDTO();
         dto.setUserId(user.getId());
         dto.setUsername(user.getUsername());
         try {
             uaaFeignClient.syncUserAuth(dto);
-        }catch (Exception e){
-            log.error("UAA 认证同步失败, username={}, userId={}, error={}",
-                    user.getUsername(), user.getId(), e.getMessage(), e);
-            throw new RuntimeException("跨服务调用失败，本地事务已回滚。用户创建已撤销，请重试", e);
+        } catch (Exception e) {
+            log.error("UAA 认证同步失败，开始补偿删除用户。username={}, userId={}",
+                    user.getUsername(), user.getId(), e);
+            baseMapper.deleteById(user.getId());
+            throw new RuntimeException("跨服务调用失败，用户创建已撤销，请重试", e);
         }
     }
 

@@ -3,6 +3,7 @@ package com.mate.admin.system.config;
 import com.mate.admin.api.common.Result;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -15,6 +16,19 @@ public class GlobalExceptionHandler {
     public Result<Void> handleFeign(FeignException e) {
         log.error("Feign 调用失败, status={}, message={}", e.status(), e.getMessage(), e);
         return Result.fail(503, "跨服务调用失败，请稍后重试");
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public Result<Void> handleDuplicateKey(DuplicateKeyException e) {
+        log.warn("数据重复: {}", e.getMessage());
+        String msg = e.getMessage();
+        if (msg != null && msg.contains("uk_username")) {
+            return Result.fail("用户名已存在");
+        }
+        if (msg != null && msg.contains("uk_role_code")) {
+            return Result.fail("角色编码已存在");
+        }
+        return Result.fail("数据重复，请检查后重试");
     }
 
     @ExceptionHandler(RuntimeException.class)

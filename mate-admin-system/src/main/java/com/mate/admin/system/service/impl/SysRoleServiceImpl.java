@@ -28,8 +28,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     private RedissonClient redissonClient;
 
     /**
-     * 分配角色权限（初版：无锁，并发下会互相覆盖）
+     * 分配角色权限（Redisson 分布式锁 + 事务保证删除插入原子性）
      */
+    @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
         String lockKey = "lock:assign:role:" + roleId;
         RLock lock = redissonClient.getLock(lockKey);

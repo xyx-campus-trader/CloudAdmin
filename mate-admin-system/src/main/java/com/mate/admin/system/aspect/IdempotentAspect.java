@@ -42,12 +42,23 @@ public class IdempotentAspect {
         }
 
         // Redis 删除 Token（原子操作），删成功即首次提交
-        Boolean deleted = stringRedisTemplate.delete(TOKEN_PREFIX + token);
+        String redisKey = TOKEN_PREFIX + token;
+        Boolean deleted = stringRedisTemplate.delete(redisKey);
         if (Boolean.FALSE.equals(deleted)) {
             throw new RuntimeException("请勿重复提交");
         }
 
-        return joinPoint.proceed();
+        try {
+            return joinPoint.proceed();
+        } catch (Throwable e) {
+            // 业务失败，恢复 Token 以便用户用同一 Token 重试
+            try {
+                stringRedisTemplate.opsForValue().set(redisKey, "1", 5, TimeUnit.MINUTES);
+            } catch (Exception redisEx) {
+                log.error("Token 恢复失败，key={}", redisKey, redisEx);
+            }
+            throw e;
+        }
     }
 
     /**
