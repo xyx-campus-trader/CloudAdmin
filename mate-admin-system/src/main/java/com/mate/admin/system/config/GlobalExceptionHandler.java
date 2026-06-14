@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public Result<Void> handleRuntime(RuntimeException e) {
         log.warn("业务异常: {}", e.getMessage());
-        return Result.fail(e.getMessage());
+        return Result.fail("操作失败，请稍后重试");
     }
 
     @ExceptionHandler(Exception.class)

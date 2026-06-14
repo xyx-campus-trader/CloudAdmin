@@ -23,13 +23,12 @@ import reactor.core.publisher.Mono;
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
 /**
  * JWT 全局鉴权过滤器
- * 白名单路径放行，其余校验 Token 有效性
+ * 白名单路径放行，其余校验 Token 有效性并透传用户身份与角色
  */
 @Slf4j
 @Component
@@ -38,7 +37,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     @Value("${jwt.secret}")
     private String secret;
 
-    private final List<String> whiteList = Arrays.asList("/auth/login", "/auth/captcha");
+    @Value("${gateway.white-list}")
+    private List<String> whiteList;
 
     @Resource
     private ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -49,33 +49,34 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // 白名单放行
         for (String pattern : whiteList) {
             if (pathMatcher.match(pattern, path)) {
                 return chain.filter(exchange);
             }
         }
 
-        // 提取 Token
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return unauthorized(exchange, "未提供认证凭证");
         }
         String token = authHeader.substring(7);
 
-        // 验签 + 检查 Redis 存活
         try {
             Claims claims = parseToken(token);
             String userId = claims.getSubject();
+            String username = claims.get("username", String.class);
+            @SuppressWarnings("unchecked")
+            List<String> roles = claims.get("roles", List.class);
+
             return reactiveRedisTemplate.hasKey("token:" + userId)
                     .flatMap(exists -> {
                         if (Boolean.FALSE.equals(exists)) {
                             return unauthorized(exchange, "令牌已过期");
                         }
-                        // 透传用户信息到下游
                         ServerHttpRequest mutated = exchange.getRequest().mutate()
                                 .header("X-User-Id", userId)
-                                .header("X-Username", claims.get("username", String.class))
+                                .header("X-Username", username != null ? username : "")
+                                .header("X-User-Role", roles != null && roles.contains("admin") ? "admin" : "user")
                                 .build();
                         return chain.filter(exchange.mutate().request(mutated).build());
                     });
@@ -86,7 +87,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     private Claims parseToken(String token) {
-        byte[] keyBytes = Base64.getEncoder().encode(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
         Key key = Keys.hmacShaKeyFor(keyBytes);
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody();

@@ -11,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -37,7 +39,11 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("密码错误");
         }
 
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername());
+        List<String> roles = userMapper.selectRoleCodesByUserId(user.getId());
+        if (roles == null) {
+            roles = Collections.emptyList();
+        }
+        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), roles);
         // Token 存 Redis，支持主动踢出
         redisTemplate.opsForValue().set("token:" + user.getId(), token,
                 jwtUtils.getClaims(token).getExpiration().getTime() - System.currentTimeMillis(),

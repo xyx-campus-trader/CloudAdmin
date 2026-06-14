@@ -13,8 +13,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/mate_admin?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
   redis:
     host: 127.0.0.1
     port: 6379
@@ -44,7 +44,7 @@ redisson:
   connection-pool-size: 8
 
 jwt:
-  secret: CloudAdmin2026SecretKeyForJwtTokenGenerationAndValidation
+  secret: ${JWT_SECRET:c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
   expiration: 604800
 
 logging:

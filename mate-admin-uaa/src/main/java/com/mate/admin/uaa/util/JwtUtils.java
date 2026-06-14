@@ -11,6 +11,7 @@ import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -23,13 +24,14 @@ public class JwtUtils {
     private long expiration;
 
     private Key getKey() {
-        byte[] keyBytes = Base64.getEncoder().encode(secret.getBytes());
+        byte[] keyBytes = Base64.getDecoder().decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(Long userId, String username) {
+    public String generateToken(Long userId, String username, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("username", username);
+        claims.put("roles", roles);
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(String.valueOf(userId))

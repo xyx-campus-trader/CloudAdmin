@@ -40,12 +40,10 @@ spring:
         max-idle: 8
         min-idle: 0
 
-# JWT
 jwt:
-  secret: CloudAdmin2026SecretKeyForJwtTokenGenerationAndValidation
+  secret: ${JWT_SECRET:c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
   expiration: 604800
 
-# Gateway white list
 gateway:
   white-list:
     - /auth/login
