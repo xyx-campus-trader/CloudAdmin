@@ -1,0 +1,27 @@
+# ==========================================
+# Nacos 配置 — mate-admin-system.yaml
+# System 专属：端口、MyBatis-Plus、Redisson、日志
+# ==========================================
+
+server:
+  port: 8082
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+redisson:
+  address: redis://127.0.0.1:6379
+  database: 1
+  connection-minimum-idle-size: 2
+  connection-pool-size: 8
+
+logging:
+  level:
+    com.mate: debug

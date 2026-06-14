@@ -1,0 +1,24 @@
+# ==========================================
+# Nacos 共享配置 — mate-admin-common.yaml
+# 所有微服务共用：数据源、Redis、JWT
+# ==========================================
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/mate_admin?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+jwt:
+  secret: ${JWT_SECRET:c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
+  expiration: 604800

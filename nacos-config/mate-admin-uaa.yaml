@@ -1,0 +1,16 @@
+# ==========================================
+# Nacos 配置 — mate-admin-uaa.yaml
+# UAA 专属：端口、MyBatis-Plus、日志
+# ==========================================
+
+server:
+  port: 8081
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.mate: debug
