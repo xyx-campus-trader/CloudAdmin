@@ -50,8 +50,9 @@ public class RoleController {
     }
 
     /**
-     * 分配权限（Redisson 分布式锁防并发冲突）
+     * 分配权限（Redisson 分布式锁防并发冲突 + 幂等Token防重复提交）
      */
+    @Idempotent
     @PostMapping("/{roleId}/assignMenus")
     public Result<Void> assignMenus(@PathVariable Long roleId,
                                      @RequestBody Map<String, List<Long>> body) {

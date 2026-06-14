@@ -10,6 +10,8 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -29,6 +31,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /**
      * 分配角色权限（Redisson 分布式锁 + 事务保证删除插入原子性）
+     * 锁在事务提交后才释放，避免其他线程读到未提交数据
      */
     @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
@@ -36,25 +39,32 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            if (!lock.tryLock(3, TimeUnit.SECONDS)) {
+            if (!lock.tryLock(3, 30, TimeUnit.SECONDS)) {
                 throw new RuntimeException("当前操作繁忙，请稍后重试");
             }
-
-            roleMapper.deleteRoleMenus(roleId);
-            if (menuIds != null && !menuIds.isEmpty()) {
-                roleMapper.insertRoleMenus(roleId, menuIds);
-            }
-
-            log.info("角色 {} 权限分配成功，菜单数: {}",
-                    roleId, menuIds == null ? 0 : menuIds.size());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("获取锁被中断", e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
         }
+
+        // 事务提交/回滚后释放锁，确保锁释放晚于事务
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCompletion(int status) {
+                        if (lock.isHeldByCurrentThread()) {
+                            lock.unlock();
+                        }
+                    }
+                });
+
+        roleMapper.deleteRoleMenus(roleId);
+        if (menuIds != null && !menuIds.isEmpty()) {
+            roleMapper.insertRoleMenus(roleId, menuIds);
+        }
+
+        log.info("角色 {} 权限分配成功，菜单数: {}",
+                roleId, menuIds == null ? 0 : menuIds.size());
     }
 
     @Override
