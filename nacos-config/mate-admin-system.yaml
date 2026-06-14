@@ -17,7 +17,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 redisson:
-  address: redis://127.0.0.1:6379
+  address: redis://${REDIS_HOST:127.0.0.1}:6379
   database: 1
   connection-minimum-idle-size: 2
   connection-pool-size: 8

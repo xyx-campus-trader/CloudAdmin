@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # ========== 基础设施 ==========
+  mysql:
+    image: mysql:8.0
+    container_name: cloudadmin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-123456}
+      MYSQL_DATABASE: mate_admin
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cloudadmin-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: cloudadmin-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - cloudadmin-net
+
+  nacos:
+    image: nacos/nacos-server:v2.3.1
+    container_name: cloudadmin-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    networks:
+      - cloudadmin-net
+
+  # ========== 微服务 ==========
+  gateway:
+    build:
+      context: .
+      dockerfile: mate-admin-gateway/Dockerfile
+    container_name: cloudadmin-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NACOS_HOST: nacos
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
+    depends_on:
+      nacos:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cloudadmin-net
+
+  uaa:
+    build:
+      context: .
+      dockerfile: mate-admin-uaa/Dockerfile
+    container_name: cloudadmin-uaa
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      NACOS_HOST: nacos
+      REDIS_HOST: redis
+      DB_HOST: mysql
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      JWT_SECRET: ${JWT_SECRET:-c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cloudadmin-net
+
+  system:
+    build:
+      context: .
+      dockerfile: mate-admin-system/Dockerfile
+    container_name: cloudadmin-system
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      NACOS_HOST: nacos
+      REDIS_HOST: redis
+      DB_HOST: mysql
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      JWT_SECRET: ${JWT_SECRET:-c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cloudadmin-net
+
+volumes:
+  mysql-data:
+
+networks:
+  cloudadmin-net:
+    driver: bridge
