@@ -37,7 +37,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${gateway.white-list}")
+    @Value("#{'${gateway.white-list}'.split(',')}")
     private List<String> whiteList;
 
     @Resource

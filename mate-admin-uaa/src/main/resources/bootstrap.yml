@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:nacos:
   application:
     name: mate-admin-uaa
   cloud:

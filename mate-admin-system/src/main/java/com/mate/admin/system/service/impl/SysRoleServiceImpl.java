@@ -31,7 +31,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
 
     /**
      * 分配角色权限（Redisson 分布式锁 + 事务保证删除插入原子性）
-     * 锁在事务提交后才释放，避免其他线程读到未提交数据
+     * 锁在事务提交后才释放，看门狗自动续期防止锁超时
      */
     @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
@@ -39,7 +39,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            if (!lock.tryLock(3, 30, TimeUnit.SECONDS)) {
+            if (!lock.tryLock(3, TimeUnit.SECONDS)) {
                 throw new RuntimeException("当前操作繁忙，请稍后重试");
             }
         } catch (InterruptedException e) {

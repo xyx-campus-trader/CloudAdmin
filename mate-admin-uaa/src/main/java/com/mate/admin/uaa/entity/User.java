@@ -1,5 +1,6 @@
 package com.mate.admin.uaa.entity;
 
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -11,13 +12,12 @@ public class User {
     private Long id;
     private String username;
     private String password;
-    private String nickname;
-    private String email;
     private String phone;
-    private String avatar;
-    private Integer status;
+    private String email;
     private Long deptId;
+    private Integer status;
+    @TableLogic
+    private Integer isDeleted;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-    private Integer isDeleted;
 }

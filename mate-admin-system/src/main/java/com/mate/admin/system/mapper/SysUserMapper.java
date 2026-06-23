@@ -12,7 +12,7 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
 
     /**
      * 用户分页查询（JOIN 部门表）
-     * 说明：此查询走了 idx_dept_status 联合索引，
+     * 说明：此查询走了 idx_user_page 联合索引，
      * EXPLAIN type=ref, rows=千级
      */
     List<SysUser> selectUserPage(@Param("offset") int offset,

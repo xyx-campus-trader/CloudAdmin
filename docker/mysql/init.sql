@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT DEFAULT 0 COMMENT '0未删 1已删',
     UNIQUE KEY uk_username (username),
-    INDEX idx_dept_status (dept_id, status, create_time)
+    INDEX idx_user_page (is_deleted, dept_id, status, create_time)
 ) COMMENT '用户表';
 
 -- 角色表
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS sys_menu (
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT DEFAULT 0,
     INDEX idx_parent (parent_id),
-    INDEX idx_sort (sort)
+    INDEX idx_status_sort (status, sort)
 ) COMMENT '菜单表';
 
 -- 角色-菜单关联表
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS sys_log (
     execution_time BIGINT COMMENT '执行耗时(ms)',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_create_time (create_time),
-    INDEX idx_username (username)
+    INDEX idx_username_time (username, create_time)
 ) COMMENT '操作日志表';
 
 -- ========= 初始数据 =========

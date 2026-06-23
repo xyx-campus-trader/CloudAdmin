@@ -62,7 +62,7 @@ public class SentinelRuleConfig {
                 )));
         GatewayApiDefinitionManager.loadApiDefinitions(apis);
 
-        // login-api 限流：5 QPS（设低一点方便触发）
+        // login-api 限流：10 QPS
         Set<GatewayFlowRule> rules = new HashSet<>();
         rules.add(new GatewayFlowRule("login-api")
                 .setCount(10)

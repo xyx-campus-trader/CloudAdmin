@@ -1,4 +1,8 @@
 spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false
   application:
     name: mate-admin-gateway
   cloud:
