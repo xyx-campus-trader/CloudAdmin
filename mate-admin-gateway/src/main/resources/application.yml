@@ -42,6 +42,11 @@ jwt:
 gateway:
   white-list: /auth/login,/auth/captcha
 
+# Sentinel 限流阈值
+sentinel:
+  qps:
+    login: 40
+
 logging:
   level:
     com.mate: debug

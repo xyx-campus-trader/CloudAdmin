@@ -22,6 +22,11 @@ redisson:
   connection-minimum-idle-size: 2
   connection-pool-size: 8
 
+lock:
+  assign:
+    wait-timeout: 3
+    lease-time: 15
+
 logging:
   level:
     com.mate: debug

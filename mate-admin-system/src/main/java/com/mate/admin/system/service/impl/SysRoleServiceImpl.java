@@ -8,6 +8,7 @@ import com.mate.admin.system.service.SysRoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -29,9 +30,14 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
     @Resource
     private RedissonClient redissonClient;
 
+    @Value("${lock.assign.wait-timeout:3}")
+    private long waitTimeout;
+    @Value("${lock.assign.lease-time:15}")
+    private long leaseTime;
+
     /**
      * 分配角色权限（Redisson 分布式锁 + 事务保证删除插入原子性）
-     * 锁在事务提交后才释放，看门狗自动续期防止锁超时
+     * 设置最大持有时间防止看门狗无限续期导致锁永不释放
      */
     @Transactional(rollbackFor = Exception.class)
     public void assignMenus(Long roleId, List<Long> menuIds) {
@@ -39,7 +45,7 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRole>
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            if (!lock.tryLock(3, TimeUnit.SECONDS)) {
+            if (!lock.tryLock(waitTimeout, leaseTime, TimeUnit.SECONDS)) {
                 throw new RuntimeException("当前操作繁忙，请稍后重试");
             }
         } catch (InterruptedException e) {

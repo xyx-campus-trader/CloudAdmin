@@ -34,6 +34,7 @@
         <hutool.version>5.8.23</hutool.version>
         <lombok.version>1.18.34</lombok.version>
         <mysql.version>8.0.33</mysql.version>
+        <feign-httpclient.version>12.3</feign-httpclient.version>
     </properties>
 
     <dependencyManagement>
@@ -110,6 +111,12 @@
                 <groupId>com.mysql</groupId>
                 <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql.version}</version>
+            </dependency>
+            <!-- Feign HttpClient (replaces default HttpURLConnection) -->
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-httpclient</artifactId>
+                <version>${feign-httpclient.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

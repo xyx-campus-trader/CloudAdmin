@@ -22,3 +22,14 @@ spring:
 jwt:
   secret: ${JWT_SECRET:c2VjcmV0X2tleV9mb3JfY2xvdWRhZG1pbl9hdXRoX3BsYXRmb3JtX3dpdGhfc3VmZmljaWVudF9sZW5ndGhfZm9yX2hzNTEy}
   expiration: 604800
+
+feign:
+  httpclient:
+    enabled: true
+    max-connections: 200
+    max-connections-per-route: 50
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000

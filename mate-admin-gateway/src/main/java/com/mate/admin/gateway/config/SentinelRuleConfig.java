@@ -9,7 +9,9 @@ import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayRuleManager;
 import com.alibaba.csp.sentinel.adapter.gateway.sc.SentinelGatewayFilter;
 import com.alibaba.csp.sentinel.adapter.gateway.sc.callback.GatewayCallbackManager;
 import com.alibaba.csp.sentinel.adapter.gateway.sc.exception.SentinelGatewayBlockExceptionHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -26,11 +28,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Configuration
 public class SentinelRuleConfig {
 
     private final List<ViewResolver> viewResolvers;
     private final ServerCodecConfigurer serverCodecConfigurer;
+
+    @Value("${sentinel.qps.login:40}")
+    private double loginQps;
 
     public SentinelRuleConfig(ObjectProvider<List<ViewResolver>> viewResolversProvider,
                                ObjectProvider<ServerCodecConfigurer> serverCodecConfigurer) {
@@ -62,12 +68,13 @@ public class SentinelRuleConfig {
                 )));
         GatewayApiDefinitionManager.loadApiDefinitions(apis);
 
-        // login-api 限流：10 QPS
+        // login-api 限流，阈值从配置读取（默认40，压测BCrypt场景约40QPS）
         Set<GatewayFlowRule> rules = new HashSet<>();
         rules.add(new GatewayFlowRule("login-api")
-                .setCount(10)
+                .setCount(loginQps)
                 .setIntervalSec(1));
         GatewayRuleManager.loadRules(rules);
+        log.info("Sentinel 登录限流规则已加载，QPS: {}", loginQps);
 
         // 自定义限流返回
         GatewayCallbackManager.setBlockHandler((exchange, t) ->

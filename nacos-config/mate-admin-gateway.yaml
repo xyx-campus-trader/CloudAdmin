@@ -26,6 +26,10 @@ spring:
 gateway:
   white-list: /auth/login,/auth/captcha
 
+sentinel:
+  qps:
+    login: 40
+
 logging:
   level:
     com.mate: debug
