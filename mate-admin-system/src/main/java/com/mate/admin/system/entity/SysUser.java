@@ -28,4 +28,5 @@ public class SysUser {
     private LocalDateTime updateTime;
     @TableLogic
     private Integer isDeleted;
+    private Integer authSynced;
 }

@@ -54,6 +54,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
         dto.setUsername(user.getUsername());
         try {
             uaaFeignClient.syncUserAuth(dto);
+            // Feign 调用成功 -> 标记已同步
+            user.setAuthSynced(1);
+            baseMapper.updateById(user);
         } catch (Exception e) {
             log.error("UAA 认证同步失败，开始补偿删除用户。username={}, userId={}",
                     user.getUsername(), user.getId(), e);
