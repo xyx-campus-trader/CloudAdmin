@@ -24,9 +24,7 @@ spring:
             - Path=/system/**
 
 gateway:
-  white-list:
-    - /auth/login
-    - /auth/captcha
+  white-list: /auth/login,/auth/captcha
 
 logging:
   level:
