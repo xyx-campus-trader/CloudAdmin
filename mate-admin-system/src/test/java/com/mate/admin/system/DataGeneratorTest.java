@@ -37,7 +37,6 @@ public class DataGeneratorTest extends ServiceImpl<SysUserMapper, SysUser> {
                 SysUser user = new SysUser();
                 user.setUsername("user_" + String.format("%07d", idx));
                 user.setPassword(encodedPwd);
-                user.setNickname("用户" + String.format("%07d", idx));
                 user.setEmail("user" + String.format("%07d", idx) + "@example.com");
                 user.setPhone("1" + String.format("%010d", (long) (Math.random() * 9_999_999_999L)));
                 user.setStatus(random.nextInt(100) < 95 ? 1 : 0);

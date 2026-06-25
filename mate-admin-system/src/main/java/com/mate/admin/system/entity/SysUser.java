@@ -14,10 +14,8 @@ public class SysUser {
     private String username;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
-    private String nickname;
     private String email;
     private String phone;
-    private String avatar;
     private Integer status;
     private Long deptId;
     @TableField(exist = false)
