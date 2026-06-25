@@ -73,12 +73,11 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
                         if (Boolean.FALSE.equals(exists)) {
                             return unauthorized(exchange, "令牌已过期");
                         }
-                        ServerHttpRequest mutated = exchange.getRequest().mutate()
-                                .header("X-User-Id", userId)
-                                .header("X-Username", username != null ? username : "")
-                                .header("X-User-Role", roles != null && roles.contains("admin") ? "admin" : "user")
-                                .build();
-                        return chain.filter(exchange.mutate().request(mutated).build());
+                        return forward(exchange, chain, userId, username, roles);
+                    })
+                    .onErrorResume(e -> {
+                        log.error("Redis 不可用，降级跳过踢人检查。userId={}", userId, e);
+                        return forward(exchange, chain, userId, username, roles);
                     });
         } catch (Exception e) {
             log.warn("Token 校验失败: {}", e.getMessage());
@@ -91,6 +90,16 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         Key key = Keys.hmacShaKeyFor(keyBytes);
         return Jwts.parserBuilder().setSigningKey(key).build()
                 .parseClaimsJws(token).getBody();
+    }
+
+    private Mono<Void> forward(ServerWebExchange exchange, GatewayFilterChain chain,
+                                String userId, String username, List<String> roles) {
+        ServerHttpRequest mutated = exchange.getRequest().mutate()
+                .header("X-User-Id", userId)
+                .header("X-Username", username != null ? username : "")
+                .header("X-User-Role", roles != null && roles.contains("admin") ? "admin" : "user")
+                .build();
+        return chain.filter(exchange.mutate().request(mutated).build());
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange, String msg) {
