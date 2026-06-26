@@ -5,6 +5,7 @@ import com.mate.admin.api.feign.UaaFeignClient;
 import com.mate.admin.system.aspect.Idempotent;
 import com.mate.admin.system.entity.SysUser;
 import com.mate.admin.system.service.SysUserService;
+import com.mate.admin.system.util.AlertUtil;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -56,5 +57,12 @@ public class UserController {
     @GetMapping("/{id}/checkExists")
     public Result<Boolean> checkExists(@PathVariable Long id) {
         return uaaFeignClient.checkUserExists(id);
+    }
+
+    /** 测试告警推送（测完删） */
+    @GetMapping("/test-alert")
+    public Result<String> testAlert() {
+        AlertUtil.critical("手动测试告警", "这是一条测试消息，如果你手机响了说明配置成功");
+        return Result.ok("告警已发送，看手机");
     }
 }

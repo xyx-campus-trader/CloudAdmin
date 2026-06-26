@@ -19,7 +19,6 @@ CREATE TABLE sys_user (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT DEFAULT 0 COMMENT '0未删 1已删',
-    auth_synced TINYINT DEFAULT 0 COMMENT '0待同步 1已同步',
     UNIQUE KEY uk_username (username),
     INDEX idx_user_page (is_deleted, dept_id, status, create_time)
 ) COMMENT '用户表';
@@ -127,5 +126,3 @@ INSERT INTO sys_dept (id, parent_id, name, sort) VALUES
 (2, 1, '研发部', 1),
 (3, 1, '市场部', 2);
 
--- 补偿回补任务所需字段（针对已建库的表）
-ALTER TABLE sys_user ADD COLUMN IF NOT EXISTS auth_synced TINYINT DEFAULT 0 COMMENT '0待同步 1已同步';

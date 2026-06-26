@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -80,8 +81,32 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu>
     @Override
     public SysMenu updateMenu(SysMenu menu) {
         baseMapper.updateById(menu);
-        stringRedisTemplate.delete(MENU_TREE_KEY);
+        deleteCacheWithRetry(MENU_TREE_KEY);
         return menu;
+    }
+
+    private void deleteCacheWithRetry(String key) {
+        Boolean deleted = stringRedisTemplate.delete(key);
+        if (Boolean.TRUE.equals(deleted)) {
+            return;
+        }
+        // 删除失败，异步重试 3 次（间隔 200ms / 500ms / 1s）
+        CompletableFuture.runAsync(() -> {
+            long[] delays = {200, 500, 1000};
+            for (int i = 0; i < delays.length; i++) {
+                try {
+                    Thread.sleep(delays[i]);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                if (Boolean.TRUE.equals(stringRedisTemplate.delete(key))) {
+                    log.info("缓存重试删除成功, key={}, 第{}次", key, i + 1);
+                    return;
+                }
+            }
+            log.error("缓存重试删除失败, key={}", key);
+        });
     }
 
     private List<SysMenu> buildTree(List<SysMenu> all) {

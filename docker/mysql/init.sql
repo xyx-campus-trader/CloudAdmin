@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS sys_user (
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_deleted TINYINT DEFAULT 0 COMMENT '0未删 1已删',
-    auth_synced TINYINT DEFAULT 0 COMMENT '0待同步 1已同步',
     UNIQUE KEY uk_username (username),
     INDEX idx_user_page (is_deleted, dept_id, status, create_time)
 ) COMMENT '用户表';

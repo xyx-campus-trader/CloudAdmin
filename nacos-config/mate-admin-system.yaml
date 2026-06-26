@@ -28,5 +28,8 @@ lock:
     lease-time: 15
 
 logging:
+  file:
+    name: logs/mate-admin-system.log
   level:
     com.mate: debug
+    com.mate.admin.system.aspect: warn

@@ -32,6 +32,11 @@ redisson:
   address: redis://127.0.0.1:6379
   database: 1
 
+# 钉钉群机器人 webhook（本地部署时替换为真实 token，不提交到 Git）
+alert:
+  webhook:
+    url: https://oapi.dingtalk.com/robot/send?access_token=your_token_here
+
 logging:
   level:
     com.mate: debug

@@ -29,6 +29,8 @@ gateway:
 sentinel:
   qps:
     login: 40
+    user-page: 500
+    role-assign: 50
 
 logging:
   level:

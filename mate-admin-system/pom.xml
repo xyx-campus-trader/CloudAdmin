@@ -45,7 +45,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
-        <!-- Redisson 分布式锁 -->
         <!-- LoadBalancer (Feign 负载均衡) -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -55,10 +54,6 @@
         <dependency>
             <groupId>io.github.openfeign</groupId>
             <artifactId>feign-httpclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

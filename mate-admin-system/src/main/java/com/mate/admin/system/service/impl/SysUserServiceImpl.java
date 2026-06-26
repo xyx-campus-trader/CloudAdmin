@@ -6,6 +6,7 @@ import com.mate.admin.api.feign.UaaFeignClient;
 import com.mate.admin.system.entity.SysUser;
 import com.mate.admin.system.mapper.SysUserMapper;
 import com.mate.admin.system.service.SysUserService;
+import com.mate.admin.system.util.AlertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,26 +42,28 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser>
     }
 
     /**
-     * 创建用户：先落库（auto-commit），数据对 UAA 可见后再同步认证信息；
-     * Feign 失败则补偿删除用户。
+     * 创建用户：先落库再同步 UAA，Feign 失败则补偿删除。
      */
     @Override
     public void addUser(SysUser user) {
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         baseMapper.insert(user);
 
-        UserRegisterDTO dto = new UserRegisterDTO();
-        dto.setUserId(user.getId());
-        dto.setUsername(user.getUsername());
         try {
+            UserRegisterDTO dto = new UserRegisterDTO();
+            dto.setUserId(user.getId());
+            dto.setUsername(user.getUsername());
             uaaFeignClient.syncUserAuth(dto);
-            // Feign 调用成功 -> 标记已同步
-            user.setAuthSynced(1);
-            baseMapper.updateById(user);
         } catch (Exception e) {
-            log.error("UAA 认证同步失败，开始补偿删除用户。username={}, userId={}",
+            log.error("UAA 认证同步失败，补偿删除用户。username={}, userId={}",
                     user.getUsername(), user.getId(), e);
-            baseMapper.deleteById(user.getId());
+            try {
+                baseMapper.deleteById(user.getId());
+            } catch (Exception deleteEx) {
+                AlertUtil.critical("补偿删除失败-需人工介入",
+                        "userId=" + user.getId() + ", username=" + user.getUsername());
+                throw new RuntimeException("跨服务调用失败，补偿删除也失败，请联系管理员", deleteEx);
+            }
             throw new RuntimeException("跨服务调用失败，用户创建已撤销，请重试", e);
         }
     }

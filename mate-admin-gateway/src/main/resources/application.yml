@@ -42,10 +42,12 @@ jwt:
 gateway:
   white-list: /auth/login,/auth/captcha
 
-# Sentinel 限流阈值
+# Sentinel 按接口差异化限流
 sentinel:
   qps:
     login: 40
+    user-page: 500
+    role-assign: 50
 
 logging:
   level:

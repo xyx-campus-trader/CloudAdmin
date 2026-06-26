@@ -50,7 +50,7 @@ public class RoleController {
     }
 
     /**
-     * 分配权限（Redisson 分布式锁防并发冲突 + 幂等Token防重复提交）
+     * 分配权限（Redis SETNX 分布式锁防并发覆盖 + 幂等Token防重复提交）
      */
     @Idempotent
     @PostMapping("/{roleId}/assignMenus")

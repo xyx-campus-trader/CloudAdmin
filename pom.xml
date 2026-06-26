@@ -29,7 +29,6 @@
         <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
 
         <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
-        <redisson.version>3.23.5</redisson.version>
         <jjwt.version>0.11.5</jjwt.version>
         <hutool.version>5.8.23</hutool.version>
         <lombok.version>1.18.34</lombok.version>
@@ -71,12 +70,6 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
-            </dependency>
-            <!-- Redisson (core only, no spring-data auto-config) -->
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson</artifactId>
-                <version>${redisson.version}</version>
             </dependency>
             <!-- JWT -->
             <dependency>
